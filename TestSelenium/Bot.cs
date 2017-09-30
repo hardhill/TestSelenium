@@ -12,13 +12,17 @@ namespace TestSelenium
 {
     
     public delegate void LoadPage(IWebDriver browser);
+    public delegate void Error(Exception e);
     
     public class Bot
     {
         private string _url;
         private Thread mainThread;
         private IWebDriver Browser;
+        private StatusBot _statusbot;
+
         public event LoadPage OnLoadpage;
+        public event Error OnError;
         //constructor
         public Bot(string url)
         {
@@ -30,10 +34,13 @@ namespace TestSelenium
             }
 
         }
-
+        public StatusBot GetStatus()
+        {
+            return _statusbot;
+        }
         public void Start()
         {
-            mainThread = new Thread(new ThreadStart(LoadPage));
+            mainThread = new Thread(new ThreadStart(ScanPages));
             mainThread.Start();
         }
 
@@ -42,14 +49,27 @@ namespace TestSelenium
             mainThread.Abort();
         }
 
-        private void LoadPage()
+        private void ScanPages()
         {
             if (Browser != null)
             {
-                Browser.Navigate().GoToUrl(_url);
-                var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(360));
-                wait.Until(driver => driver.FindElements(By.TagName("div")).Any(x=>x.Displayed));
-                OnLoadpage(Browser);
+                _statusbot = StatusBot.Work;
+                try
+                {
+                    Browser.Navigate().GoToUrl(_url);
+                    var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(360));
+                    wait.Until(driver => driver.FindElements(By.TagName("div")).Any(x => x.Displayed));
+                    if(OnLoadpage!=null)
+                        OnLoadpage(Browser);
+                }catch(Exception e)
+                {
+                    _statusbot = StatusBot.Stop;
+                    if(OnError!=null)
+                        OnError(e);
+                }
+                //статус бота
+                _statusbot = StatusBot.Pause;
+                // загрузка прошла
                 
             }
         }
@@ -62,5 +82,11 @@ namespace TestSelenium
         }
 
         
+    }
+
+    public enum StatusBot
+    {
+        Pause=0,Work=1,
+        Stop = 2
     }
 }

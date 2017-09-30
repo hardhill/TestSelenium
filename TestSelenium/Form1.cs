@@ -41,6 +41,7 @@ namespace TestSelenium
             (sender as Button).Enabled = false;
             Bot mainBot = new Bot("https://yandex.ru");
             mainBot.OnLoadpage += MainBot_OnLoadpage;
+            mainBot.OnError += MainBot_OnError;
             mainBot.Start();
             //using (Browser = new ChromeDriver())
             //{
@@ -72,10 +73,15 @@ namespace TestSelenium
             //}
         }
 
+        private void MainBot_OnError(Exception e)
+        {
+            // обработка ошибки действия страницы
+        }
+
         private void MainBot_OnLoadpage(IWebDriver browser)
         {
-           List<IWebElement> elements = browser.FindElements(By.TagName("a")).ToList();
-           foreach(IWebElement element in elements)
+            List<IWebElement> elements = browser.FindElements(By.TagName("a")).ToList();
+            foreach (IWebElement element in elements)
             {
                 string text = element.GetAttribute("href").ToString();
                 Action action = () => { lbURLs.Items.Add(text); };
