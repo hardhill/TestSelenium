@@ -11,8 +11,9 @@ using System.Threading.Tasks;
 namespace TestSelenium
 {
     
-    public delegate void LoadPage(IWebDriver browser);
+    public delegate void LoadPage(List<string> lstLinks );
     public delegate void Error(Exception e);
+    public delegate void StopWork();
     
     public class Bot
     {
@@ -20,12 +21,15 @@ namespace TestSelenium
         private Thread mainThread;
         private IWebDriver Browser;
         private StatusBot _statusbot;
+        private List<string> listMainBuffer;
 
         public event LoadPage OnLoadpage;
         public event Error OnError;
+        public event StopWork OnStopWork;
         //constructor
         public Bot(string url)
         {
+            listMainBuffer = new List<string>();
             this._url = url;
             Browser = new ChromeDriver();
             if (Browser != null)
@@ -34,19 +38,16 @@ namespace TestSelenium
             }
 
         }
-        public StatusBot GetStatus()
-        {
-            return _statusbot;
-        }
+        
         public void Start()
         {
             mainThread = new Thread(new ThreadStart(ScanPages));
             mainThread.Start();
         }
 
-        public void Stop()
+        public void StopWorking()
         {
-            mainThread.Abort();
+            _statusbot = StatusBot.Stop;
         }
 
         private void ScanPages()
@@ -59,8 +60,17 @@ namespace TestSelenium
                     Browser.Navigate().GoToUrl(_url);
                     var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(360));
                     wait.Until(driver => driver.FindElements(By.TagName("div")).Any(x => x.Displayed));
-                    if(OnLoadpage!=null)
-                        OnLoadpage(Browser);
+
+                    List<IWebElement> elements = Browser.FindElements(By.TagName("a")).ToList();
+                    foreach (IWebElement element in elements)
+                    {
+                        string text = element.GetAttribute("href").ToString();
+                        listMainBuffer.Add(text);
+                     
+                    }
+                    //страница вся загружена
+                    if (OnLoadpage!=null)
+                        OnLoadpage(listMainBuffer);
                 }catch(Exception e)
                 {
                     _statusbot = StatusBot.Stop;
@@ -68,25 +78,39 @@ namespace TestSelenium
                         OnError(e);
                 }
                 //статус бота
-                _statusbot = StatusBot.Pause;
-                // загрузка прошла
+                while (_statusbot==StatusBot.Work)
+                {
+                    Console.Out.WriteLine("Working....");
+                    Thread.Sleep(500);
+                    if (_statusbot == StatusBot.Stop)
+                    {
+                        if (OnStopWork != null)
+                            OnStopWork();
+                        break;
+                    }
+                    
+                }
+               
                 
+                Console.Out.WriteLine("Bot work complite");
+               
             }
         }
 
         public void KillBot()
         {
-            Stop();
+            mainThread.Abort();
             Browser.Close();
             Browser.Dispose();
         }
-
+        
         
     }
 
-    public enum StatusBot
+    internal enum StatusBot
     {
-        Pause=0,Work=1,
+        Pause=0,
+        Work =1,
         Stop = 2
     }
 }

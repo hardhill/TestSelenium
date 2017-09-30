@@ -17,7 +17,8 @@ namespace TestSelenium
 
     public partial class Form1 : Form
     {
-        
+        private Bot mainBot;
+
         public Form1()
         {
             InitializeComponent();
@@ -31,7 +32,7 @@ namespace TestSelenium
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            //проверка наличия сети
+            //
 
         }
 
@@ -39,9 +40,10 @@ namespace TestSelenium
         {
             string text;
             (sender as Button).Enabled = false;
-            Bot mainBot = new Bot("https://yandex.ru");
+            mainBot = new Bot("https://yandex.ru");
             mainBot.OnLoadpage += MainBot_OnLoadpage;
             mainBot.OnError += MainBot_OnError;
+            mainBot.OnStopWork += MainBot_OnStopWork;
             mainBot.Start();
             //using (Browser = new ChromeDriver())
             //{
@@ -73,20 +75,32 @@ namespace TestSelenium
             //}
         }
 
+        private void MainBot_OnStopWork()
+        {
+            Action action = () =>
+            {
+                Console.Out.WriteLine("Working break");
+               
+            };
+           Invoke(action);
+           
+        }
+
         private void MainBot_OnError(Exception e)
         {
             // обработка ошибки действия страницы
         }
 
-        private void MainBot_OnLoadpage(IWebDriver browser)
+        private void MainBot_OnLoadpage(List<string> lstLinks)
         {
-            List<IWebElement> elements = browser.FindElements(By.TagName("a")).ToList();
-            foreach (IWebElement element in elements)
-            {
-                string text = element.GetAttribute("href").ToString();
-                Action action = () => { lbURLs.Items.Add(text); };
+                Action action = () => { lbURLs.Items.AddRange(lstLinks.ToArray()); };
                 Invoke(action);
-            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (mainBot != null)
+                mainBot.StopWorking();
         }
     }
 }
