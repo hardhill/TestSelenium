@@ -45,34 +45,7 @@ namespace TestSelenium
             mainBot.OnError += MainBot_OnError;
             mainBot.OnStopWork += MainBot_OnStopWork;
             mainBot.Start();
-            //using (Browser = new ChromeDriver())
-            //{
-            //    Browser.Manage().Timeouts().PageLoad = TimeSpan.FromMinutes(1);
-            //    Browser.Navigate().GoToUrl("https://yandex.ru");
-            //    IWebElement quirystring = Browser.FindElement(By.Id("text"));
-            //    quirystring.SendKeys("giant");
-            //    quirystring.Submit();
-            //    var wait = new WebDriverWait(Browser, TimeSpan.FromMinutes(1)).Until(driver => driver.FindElements(By.TagName("a")));
-            //    List<IWebElement> elements = Browser.FindElements(By.TagName("a")).ToList();
-            //    foreach (IWebElement el in elements)
-            //    {
-            //        text = el.GetAttribute("href").ToString();
-            //        lbURLs.Items.Add(text);
-            //    }
-            //    //do
-            //    //{
-            //    //    string newurl = lbURLs.Items[0].ToString();
-            //    //    Browser.Navigate().GoToUrl(newurl);
-            //    //    elements = Browser.FindElements(By.TagName("a")).ToList();
-            //    //    foreach (IWebElement el in elements)
-            //    //    {
-            //    //        text = el.GetAttribute("href").ToString();
-            //    //        if(lbURLs.Items.Count<64000)
-            //    //            lbURLs.Items.Add(text);
-            //    //    }
-            //    //    lbURLs.Items.RemoveAt(0);
-            //    //} while (lbURLs.Items.Count > 0);
-            //}
+            
         }
 
         private void MainBot_OnStopWork()
@@ -86,14 +59,18 @@ namespace TestSelenium
            
         }
 
-        private void MainBot_OnError(Exception e)
+        private void MainBot_OnError(string err)
         {
-            // обработка ошибки действия страницы
+            Console.Out.WriteLine(err);
         }
 
         private void MainBot_OnLoadpage(List<string> lstLinks)
         {
-                Action action = () => { lbURLs.Items.AddRange(lstLinks.ToArray()); };
+                Action action = () => {
+                    lbURLs.Items.Clear();
+                    lbURLs.Items.AddRange(lstLinks.ToArray());
+                    stbText.Text = String.Format("Всего ссылок:{0}", lstLinks.Count);
+                };
                 Invoke(action);
         }
 
