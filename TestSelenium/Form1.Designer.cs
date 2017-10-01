@@ -34,9 +34,9 @@
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.lbURLs = new System.Windows.Forms.ListBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.stbText = new System.Windows.Forms.ToolStripStatusLabel();
+            this.lbURLs = new System.Windows.Forms.ListBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -44,7 +44,7 @@
             // 
             // timer1
             // 
-            this.timer1.Interval = 60000;
+            this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // panel1
@@ -87,15 +87,6 @@
             this.panel2.Size = new System.Drawing.Size(611, 335);
             this.panel2.TabIndex = 4;
             // 
-            // lbURLs
-            // 
-            this.lbURLs.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lbURLs.FormattingEnabled = true;
-            this.lbURLs.Location = new System.Drawing.Point(0, 0);
-            this.lbURLs.Name = "lbURLs";
-            this.lbURLs.Size = new System.Drawing.Size(611, 335);
-            this.lbURLs.TabIndex = 1;
-            // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -110,6 +101,15 @@
             // 
             this.stbText.Name = "stbText";
             this.stbText.Size = new System.Drawing.Size(0, 17);
+            // 
+            // lbURLs
+            // 
+            this.lbURLs.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lbURLs.FormattingEnabled = true;
+            this.lbURLs.Location = new System.Drawing.Point(0, 0);
+            this.lbURLs.Name = "lbURLs";
+            this.lbURLs.Size = new System.Drawing.Size(611, 335);
+            this.lbURLs.TabIndex = 1;
             // 
             // Form1
             // 

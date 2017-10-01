@@ -32,20 +32,21 @@ namespace TestSelenium
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            //
+           if(mainBot.GetStatus() == StatusBot.Stop)
+            {
+                mainBot.Start();
+            }
 
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string text;
             (sender as Button).Enabled = false;
             mainBot = new Bot("https://yandex.ru/");
             mainBot.OnLoadpage += MainBot_OnLoadpage;
             mainBot.OnError += MainBot_OnError;
             mainBot.OnStopWork += MainBot_OnStopWork;
-            mainBot.Start();
-            
+            timer1.Enabled = true;
         }
 
         private void MainBot_OnStopWork()
@@ -77,7 +78,13 @@ namespace TestSelenium
         private void button2_Click(object sender, EventArgs e)
         {
             if (mainBot != null)
+            {
                 mainBot.StopWorking();
+                timer1.Enabled = false;
+                mainBot.KillBot();
+                mainBot = null;
+                button1.Enabled = true;
+            }
         }
     }
 }

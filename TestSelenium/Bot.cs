@@ -27,6 +27,8 @@ namespace TestSelenium
         private List<string> listMainBuffer;
         private List<string> listVisitedLinks;
 
+
+
         public event LoadPage OnLoadpage;
         public event Error OnError;
         public event StopWork OnStopWork;
@@ -36,13 +38,16 @@ namespace TestSelenium
             listMainBuffer = new List<string>();
             listVisitedLinks = new List<string>();
             this._url = url;
+            _statusbot = StatusBot.Stop;
             Browser = new ChromeDriver();
             if (Browser != null)
             {
+
                 Browser.Manage().Timeouts().PageLoad = TimeSpan.FromMinutes(4);
             }
-
+            
         }
+        
 
         public void Start()
         {
@@ -85,61 +90,67 @@ namespace TestSelenium
                 }
 
                 //----------------------------------------------------------
-                    Console.Out.WriteLine("Working....");
-                    //работа по стэку ссылок
-                    while ((listMainBuffer.Count > 0) && (_statusbot == StatusBot.Work))
+                Console.Out.WriteLine("Working....");
+                //работа по стэку ссылок
+                while ((listMainBuffer.Count > 0) && (_statusbot == StatusBot.Work))
+                {
+                    string curLink = listMainBuffer[0].ToString();
+                    try
                     {
-                        string curLink = listMainBuffer[0].ToString();
-                        try
+                        if (PutVisitedLink(curLink))
                         {
-                            if (PutVisitedLink(curLink))
+                            //переходим по ссылке которую сохранили в словаре ссылок
+                            try
                             {
-                                //переходим по ссылке которую сохранили в словаре ссылок
-                                try
+                                Browser.Navigate().GoToUrl(curLink);
+                                var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(360));
+                                if (wait.Until(driver => driver.FindElements(By.TagName("a")).Any(x => x.Displayed)))
                                 {
-                                    Browser.Navigate().GoToUrl(curLink);
-                                    var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(360));
-                                   if(wait.Until(driver => driver.FindElements(By.TagName("a")).Any(x => x.Displayed)))
+                                    //elements = Browser.FindElements(By.TagName("a")).ToList();
+                                    elements = Browser.FindElements(By.CssSelector("a[href]")).ToList();
+                                    Console.Out.WriteLine(String.Format("По корневой ссылке {0} нашли еще {1} ссылок", curLink, elements.Count));
+                                    foreach (IWebElement el in elements)
                                     {
-                                        //elements = Browser.FindElements(By.TagName("a")).ToList();
-                                        elements = Browser.FindElements(By.CssSelector("a[href]")).ToList();
-                                        Console.Out.WriteLine(String.Format("По корневой ссылке {0} нашли еще {1} ссылок", curLink, elements.Count));
-                                        foreach (IWebElement el in elements)
+                                        if (el.Displayed)   //если ссылка реально на странице
                                         {
-                                            if (el.Displayed)   //если ссылка реально на странице
+                                            //Console.Out.WriteLine(String.Format("элемент: {0}", el.Text));
+                                            subLink = el.GetAttribute("href").ToString();
+                                            //добавить в конец списка корневых ссылок если нет в словаре ссылок
+                                            if (PutVisitedLink(subLink))
                                             {
-                                                //Console.Out.WriteLine(String.Format("элемент: {0}", el.Text));
-                                                subLink = el.GetAttribute("href").ToString();
-                                                //добавить в конец списка корневых ссылок если нет в словаре ссылок
-                                                if (PutVisitedLink(subLink))
-                                                {
-                                                    listMainBuffer.Add(subLink);
-                                                }
+                                                listMainBuffer.Add(subLink);
                                             }
                                         }
                                     }
-                                    // ищем все ссылки на странице
-                                    
-                                    
-                                    
                                 }
-                                catch (Exception e)
-                                {
-                                    _statusbot = StatusBot.Stop;
-                                    if (OnError != null)
-                                        OnError(String.Format("Ошибка обработки основного списка по ссылке {0}", e.Message));
-                                }
+                                // ищем все ссылки на странице
+
+
+
+                            }
+                            catch (Exception e)
+                            {
+                                _statusbot = StatusBot.Stop;
+                                if (OnError != null)
+                                    OnError(String.Format("Ошибка обработки основного списка по ссылке {0}", e.Message));
                             }
                         }
-                        finally
-                        {
-                            listMainBuffer.RemoveAt(0);
-                            OnLoadpage(listMainBuffer);
-                        }
+                    }
+                    finally
+                    {
+                        listMainBuffer.RemoveAt(0);
+                        OnLoadpage(listMainBuffer);
+                    }
 
-                    };
-
-                SaveToFile(listVisitedLinks);
+                };
+                try
+                {
+                    SaveToFile(listVisitedLinks);
+                }
+                catch (Exception e)
+                {
+                    OnError(e.Message);
+                }
 
 
                 Console.Out.WriteLine("Bot work complite");
@@ -150,9 +161,9 @@ namespace TestSelenium
         private void SaveToFile(List<string> listVisitedLinks)
         {
             TextWriter tw = new StreamWriter("Urls.txt");
-            foreach(String line in listVisitedLinks)
+            foreach (String line in listVisitedLinks)
             {
-                tw.WriteLineAsync(line);
+                tw.WriteLine(line);
             }
             tw.Close();
         }
@@ -175,10 +186,17 @@ namespace TestSelenium
             Browser.Dispose();
         }
 
+        public StatusBot GetStatus()
+        {
+            return _statusbot;
+        }
 
     }
 
-    internal enum StatusBot
+
+
+
+    public enum StatusBot
     {
         Pause = 0,
         Work = 1,
