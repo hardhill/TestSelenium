@@ -3,6 +3,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -84,12 +85,9 @@ namespace TestSelenium
                 }
 
                 //----------------------------------------------------------
-                //статус бота
-                while (_statusbot == StatusBot.Work)
-                {
                     Console.Out.WriteLine("Working....");
                     //работа по стэку ссылок
-                    do
+                    while ((listMainBuffer.Count > 0) && (_statusbot == StatusBot.Work))
                     {
                         string curLink = listMainBuffer[0].ToString();
                         try
@@ -104,15 +102,20 @@ namespace TestSelenium
                                    if(wait.Until(driver => driver.FindElements(By.TagName("a")).Any(x => x.Displayed)))
                                     {
                                         //elements = Browser.FindElements(By.TagName("a")).ToList();
-                                        elements = Browser.FindElements(By.XPath("//a")).ToList();
+                                        elements = Browser.FindElements(By.CssSelector("a[href]")).ToList();
                                         Console.Out.WriteLine(String.Format("По корневой ссылке {0} нашли еще {1} ссылок", curLink, elements.Count));
                                         foreach (IWebElement el in elements)
                                         {
-                                            Console.Out.WriteLine(String.Format("элемент {0}", el.Text));
-                                            subLink = el.GetAttribute("href").ToString();
-
-                                            //добавить в конец списка корневых ссылок если нет в словаре ссылок
-
+                                            if (el.Displayed)   //если ссылка реально на странице
+                                            {
+                                                //Console.Out.WriteLine(String.Format("элемент: {0}", el.Text));
+                                                subLink = el.GetAttribute("href").ToString();
+                                                //добавить в конец списка корневых ссылок если нет в словаре ссылок
+                                                if (PutVisitedLink(subLink))
+                                                {
+                                                    listMainBuffer.Add(subLink);
+                                                }
+                                            }
                                         }
                                     }
                                     // ищем все ссылки на странице
@@ -125,8 +128,6 @@ namespace TestSelenium
                                     _statusbot = StatusBot.Stop;
                                     if (OnError != null)
                                         OnError(String.Format("Ошибка обработки основного списка по ссылке {0}", e.Message));
-                                    
-
                                 }
                             }
                         }
@@ -136,22 +137,24 @@ namespace TestSelenium
                             OnLoadpage(listMainBuffer);
                         }
 
-                    } while ((listMainBuffer.Count > 0)&&(_statusbot==StatusBot.Work));
+                    };
 
-                    Thread.Sleep(500);
-                    if (_statusbot == StatusBot.Stop)
-                    {
-                        if (OnStopWork != null)
-                            OnStopWork();
-                        break;
-                    }
-
-                }
+                SaveToFile(listVisitedLinks);
 
 
                 Console.Out.WriteLine("Bot work complite");
 
             }
+        }
+
+        private void SaveToFile(List<string> listVisitedLinks)
+        {
+            TextWriter tw = new StreamWriter("Urls.txt");
+            foreach(String line in listVisitedLinks)
+            {
+                tw.WriteLineAsync(line);
+            }
+            tw.Close();
         }
 
         private bool PutVisitedLink(string curLink)

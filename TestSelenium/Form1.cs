@@ -40,7 +40,7 @@ namespace TestSelenium
         {
             string text;
             (sender as Button).Enabled = false;
-            mainBot = new Bot("https://yandex.ru");
+            mainBot = new Bot("https://yandex.ru/");
             mainBot.OnLoadpage += MainBot_OnLoadpage;
             mainBot.OnError += MainBot_OnError;
             mainBot.OnStopWork += MainBot_OnStopWork;
